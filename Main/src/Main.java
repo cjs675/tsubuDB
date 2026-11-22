@@ -1,8 +1,6 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.PreparedStatement;
-import java.sql.SQLOutput;
 import java.util.Objects;
 
 public class Main {
@@ -19,12 +17,11 @@ public class Main {
 
     private enum StatementType {
         STATEMENT_INSERT("insert"),
-        STATEMENT_SELECT("select")
-        ;
+        STATEMENT_SELECT("select");
 
         private final String text;
 
-        StatementType(final String text); {
+        StatementType(final String text) {
             this.text = text;
         }
 
@@ -46,12 +43,12 @@ public class Main {
         }
     }
 
-    private class PreparedStatement {
-        private PrepareResult prepareResult;
-        private Statement statement;
+    private class PreparedStatementResult {
+        private final PrepareResult prepareResult;
+        private final Statement statement;
 
-        public PreparedStatement {PrepareResult statementCheckResult, Statement statement) {
-            this.prepareResult = statementCheckResult;
+        public PreparedStatementResult(PrepareResult prepareResult, Statement statement) {
+            this.prepareResult = prepareResult;
             this.statement = statement;
         }
 
@@ -69,6 +66,7 @@ public class Main {
     }
 
     public void run() {
+        // Executes interactive command loop; processes meta-commands and statements
         while (true) {
             printPrompt();
             String input = readInput();
@@ -78,6 +76,7 @@ public class Main {
                 // do nothing and loop
                 continue;
             }
+
             if (input.charAt(0) == '.') {
                 MetaCommandResult metaCommandResult = doMetaCommand(input);
                 switch (metaCommandResult) {
@@ -88,31 +87,51 @@ public class Main {
                         continue;
                 }
             }
-            PreparedStatement preparedStatement = prepareStatmeent(input);
-            switch (preparedStatement.prepareResult) {
+
+            PreparedStatementResult preparedStatement = prepareStatement(input);
+            switch (preparedStatement.getPrepareResult()) {
                 case PREPARE_SUCCESS:
                     break;
                 case PREPARE_UNRECOGNIZED_STATEMENT:
                     System.out.printf("Unrecognized keyword at start of: '%s'%n", input);
                     continue;
             }
+
             executeStatement(preparedStatement.getStatement());
             System.out.printf("Executed.%n");
         }
     }
 
     private MetaCommandResult doMetaCommand(String input) {
-            if (input.equals(".exit")) {
-                System.out.println("Exiting - Good bye.");
-                System.exit(0);
-            }
-            return MetaCommandResult.META_COMMAND_UNRECOGNIZED_COMMAND;
+        if (input.equals(".exit")) {
+            System.out.println("Exiting - Good bye.");
+            System.exit(0);
+        }
+
+        return MetaCommandResult.META_COMMAND_UNRECOGNIZED_COMMAND;
     }
 
-    private PreparedStatement preparedStatement(String input) {
-            String preparedStatement = input.toLowerCase();
-            if (preparedInput.startsWith(StatementType.STATEMENT_INSERT)).toString())) {
-                Statement statement = new Statement(StatementType.STATEMENT_INSERT);
+    private PreparedStatementResult prepareStatement(String input) {
+        String preparedInput = input.toLowerCase();
+
+        // Identifies statement type and returns successful preparation result
+        if (preparedInput.startsWith(StatementType.STATEMENT_INSERT.toString())) {
+            Statement statement = new Statement(StatementType.STATEMENT_INSERT);
+            return new PreparedStatementResult(PrepareResult.PREPARE_SUCCESS, statement);
+        } else if (preparedInput.startsWith(StatementType.STATEMENT_SELECT.toString())) {
+            Statement statement = new Statement(StatementType.STATEMENT_SELECT);
+            return new PreparedStatementResult(PrepareResult.PREPARE_SUCCESS, statement);
+        }
+
+        return new PreparedStatementResult(PrepareResult.PREPARE_UNRECOGNIZED_STATEMENT, null);
+    }
+
+    private String readInput() {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            return reader.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read input", e);
         }
     }
 
@@ -120,14 +139,14 @@ public class Main {
         System.out.print("tsubuDB > ");
     }
 
-    private String readInput() {
-        String inputLine = null;
-        try {
-            BufferedReader is = new BufferedReader(new InputStreamReader(System.in));
-            inputLine = is.readLine();
-        } catch (IOException e) {
-            System.out.println("IOException: " + e);
+    private void executeStatement(Statement statement) {
+        switch (statement.getStatementType()) {
+            case STATEMENT_INSERT:
+                System.out.println("This is where an insert would be made");
+                break;
+            case STATEMENT_SELECT:
+                System.out.println("This is where a select would be made");
+                break;
         }
-        return inputLine;
     }
 }
